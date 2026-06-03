@@ -1,0 +1,58 @@
+package org.example;
+
+import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.TaskAction;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+
+public class LineStatsTask extends DefaultTask {
+
+    @TaskAction
+    public void execute() {
+        File sourceDir = getProject().file("src/main/java");
+        if (!sourceDir.exists()) {
+            getLogger().warn("Java files are not found");
+            return;
+        }
+
+        List<File> javaFiles = new ArrayList<>();
+        findJavaFiles(sourceDir, javaFiles);
+
+        System.out.println("----------------------------------------");
+        System.out.println("LINE STATISTICS");
+        System.out.println("----------------------------------------");
+
+        int totalLines = 0;
+
+        for (File file : javaFiles) {
+            try {
+                List<String> lines = Files.readAllLines(file.toPath());
+                int linesCount = lines.size();
+                totalLines += linesCount;
+
+                System.out.println("File: " + file.getName() + " -> Lines: " + linesCount);
+            } catch (IOException e) {
+                getLogger().error("Could not read file: " + file.getName(), e);
+            }
+        }
+
+        System.out.println("----------------------------------------");
+        System.out.println("TOTAL LINES OF CODE: " + totalLines);
+        System.out.println("----------------------------------------");
+    }
+
+    private void findJavaFiles(File dir, List<File> fileList) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file.isDirectory()) {
+                findJavaFiles(file, fileList);
+            } else if (file.getName().endsWith(".java")) {
+                fileList.add(file);
+            }
+        }
+    }
+}
